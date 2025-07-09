@@ -18,7 +18,7 @@ const PORT = 3000;
 app.use(express.json());
 
 // Add new user
-app.post("/signup",async (req, res) => {
+app.post("/signup", async (req, res) => {
   const parsedData = CreateUserSchema.safeParse(req.body);
   if (!parsedData.success) {
     res.json({ msg: parsedData.error });
@@ -38,7 +38,7 @@ app.post("/signup",async (req, res) => {
     res.json({
       msg: "User created",
     });
-    return
+    return;
   } catch (error) {
     res.json({
       msg: "User already exist",
@@ -54,20 +54,34 @@ app.post("/login", async (req, res) => {
     res.json({ msg: parsedData.error });
     return;
   }
-  const user = 1;
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email: parsedData.data.email,
+      },
+    });
+    if (!user) return;
+    const compare = bcrypt.compareSync(parsedData.data.password, user.password);
+    if (!compare) return;
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET ?? " ");
+    res.header(
+      "Set-Cookie",
+      serialize("draw-app-token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24,
+      })
+    );
+    res.json({ token });
+    return;
+  } catch (error) {
+    res.json({ msg: "User does not exist" });
+    return;
+  }
 
-  const token = jwt.sign({ userId: user }, JWT_SECRET ?? " ");
-  res.header(
-    "Set-Cookie",
-    serialize("draw-app-token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24,
-    })
-  );
-  res.json({ msg: "signed in" });
+  res.json({ msg: "Email and Password combination is wrong" });
 });
 
 app.use(auth);
