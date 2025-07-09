@@ -2,37 +2,72 @@ require("dotenv").config();
 
 import express from "express";
 import jwt from "jsonwebtoken";
+import { serialize } from "cookie";
+import bcrypt from "bcrypt";
+
 import { JWT_SECRET } from "@repo/common/config";
 import { CreateUserSchema, LoginUserSchema } from "@repo/common/types";
+import prisma from "@repo/db/prisma";
 
 import drawings from "./router/drawings";
 import auth from "./middleware";
 
 const app = express();
-const PORT = 3001;
+const PORT = 3000;
 
 app.use(express.json());
 
 // Add new user
-app.post("/signup", (req, res) => {
+app.post("/signup",async (req, res) => {
   const parsedData = CreateUserSchema.safeParse(req.body);
   if (!parsedData.success) {
     res.json({ msg: parsedData.error });
     return;
   }
-  res.json({ msg: "signup" });
+
+  const hash = bcrypt.hashSync(parsedData.data.password, 10);
+
+  try {
+    await prisma.user.create({
+      data: {
+        email: parsedData.data.email,
+        password: hash,
+        name: parsedData.data.username,
+      },
+    });
+    res.json({
+      msg: "User created",
+    });
+    return
+  } catch (error) {
+    res.json({
+      msg: "User already exist",
+    });
+    return;
+  }
 });
 
 // Login as existing user
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const parsedData = LoginUserSchema.safeParse(req.body);
   if (!parsedData.success) {
     res.json({ msg: parsedData.error });
     return;
   }
   const user = 1;
+
   const token = jwt.sign({ userId: user }, JWT_SECRET ?? " ");
-  res.json({ token });
+  res.header(
+    "Set-Cookie",
+    serialize("draw-app-token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    })
+  );
+  res.json({ msg: "signed in" });
 });
 
 app.use(auth);

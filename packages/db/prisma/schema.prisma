@@ -1,0 +1,40 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or mysql/sqlite
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @unique @default(uuid())
+  email     String    @unique
+  password  String // hashed password
+  name      String
+  drawings  Drawing[]
+  createdAt DateTime  @default(now())
+}
+
+model Drawing {
+  id            String          @id @unique @default(uuid())
+  title         String          @default("title")
+  data          Json? // base64 or stroke object
+  thumbnail     String? // optional base64 preview or URL
+  user          User?           @relation(fields: [userId], references: [id])
+  userId        String
+  isPublic      Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  SharedDrawing SharedDrawing[]
+}
+
+model SharedDrawing {
+  id        String   @id @default(uuid())
+  drawing   Drawing  @relation(fields: [drawingId], references: [id])
+  drawingId String
+  shareId   String   @unique // short public slug
+  createdAt DateTime @default(now())
+}
