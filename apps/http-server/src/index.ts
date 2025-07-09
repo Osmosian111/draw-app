@@ -60,9 +60,15 @@ app.post("/login", async (req, res) => {
         email: parsedData.data.email,
       },
     });
-    if (!user) return;
+    if (!user) {
+      res.json({ msg: "Email and Password combination is wrong" });
+      return;
+    }
     const compare = bcrypt.compareSync(parsedData.data.password, user.password);
-    if (!compare) return;
+    if (!compare) {
+      res.json({ msg: "Email and Password combination is wrong" });
+      return;
+    }
     const token = jwt.sign({ userId: user.id }, JWT_SECRET ?? " ");
     res.header(
       "Set-Cookie",
@@ -80,8 +86,6 @@ app.post("/login", async (req, res) => {
     res.json({ msg: "User does not exist" });
     return;
   }
-
-  res.json({ msg: "Email and Password combination is wrong" });
 });
 
 app.use(auth);
