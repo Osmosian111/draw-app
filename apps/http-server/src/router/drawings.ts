@@ -7,42 +7,62 @@ const router = Router();
 // Save a new drawing
 router.post("/", async (req, res) => {
   const parsedData = DrawingSchema.safeParse(req.body);
-  if(!parsedData.success){
+  if (!parsedData.success) {
     res.json({
-      msg:"Error"
-    })
-    return
+      msg: "Error",
+    });
+    return;
   }
-  const drawingData = parsedData.data
+  const drawingData = parsedData.data;
   try {
     await prisma.drawing.create({
       data: {
         title: drawingData.title,
         data: drawingData.data,
-        thumbnail:drawingData.thumbnail,
+        thumbnail: drawingData.thumbnail,
         userId: drawingData.userId,
         isPublic: drawingData.isPublic,
       },
     });
     res.json({
-      msg:"Saved!"
-    })
+      msg: "Saved!",
+    });
   } catch (error) {
     res.json({
       msg: "Reponse failed",
     });
-    return
+    return;
   }
 });
 
 // Get all drawings
-router.get("/", (req, res) => {
-  res.send({ msg: "drawings" });
+router.get("/", async (req, res) => {
+  const userId = req.body.userId;
+  if (!userId) {
+    res.json({
+      msg: "Auth error",
+    });
+    return;
+  }
+  const drawingData = await prisma.drawing.findMany({
+    where: {
+      userId,
+    },
+  });
+  res.send({ drawingData });
 });
 
 // Get a specific drawing by ID
-router.get("/:id", (req, res) => {
-  res.send({ msg: "drawings" });
+router.get("/:id", async (req, res) => {
+  const userId = req.body.userId;
+  const id = req.params.id;
+  const drawingData = await prisma.drawing.findUnique({
+    where: {
+      userId,
+      id,
+    },
+  });
+  res.send({ drawingData });
 });
 
 // Update an existing drawing
