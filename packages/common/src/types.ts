@@ -23,15 +23,24 @@ const strokeSchema = z.object({
   point: z.array(pointSchema).min(1),
 });
 
+const dataSchema = z.object({
+  width: z.number().min(10).max(5000),
+  height: z.number().min(10).max(5000),
+  background: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/),
+  strokes: z.array(strokeSchema).min(1),
+});
+
 export const DrawingSchema = z.object({
   title: z.string().max(100).optional(),
-  data: z.object({
-    width: z.number().min(10).max(5000),
-    height: z.number().min(10).max(5000),
-    background: z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/),
-    strokes: z.array(strokeSchema).min(1),
-  }),
+  data: dataSchema,
   thumbnail: z.string().optional(),
   isPublic: z.boolean().optional(),
-  userId: z.string()
+  userId: z.string(),
+});
+
+export const UpdateDrawingSchema = z.object({
+  title: z.string().max(100).optional(),
+  data: dataSchema.optional(),
+  thumbnail: z.string().optional(),
+  isPublic: z.boolean().optional(),
 });

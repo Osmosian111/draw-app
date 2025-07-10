@@ -1,8 +1,12 @@
-import { DrawingSchema } from "@repo/common/types";
+import { DrawingSchema, UpdateDrawingSchema } from "@repo/common/types";
 import prisma from "@repo/db/prisma";
-import express, { Router } from "express";
+import id from "./id/index"
+
+import { Router } from "express";
 
 const router = Router();
+
+router.use("/:id",id)
 
 // Save a new drawing
 router.post("/", async (req, res) => {
@@ -52,31 +56,4 @@ router.get("/", async (req, res) => {
   res.send({ drawingData });
 });
 
-// Get a specific drawing by ID
-router.get("/:id", async (req, res) => {
-  const userId = req.body.userId;
-  const id = req.params.id;
-  const drawingData = await prisma.drawing.findUnique({
-    where: {
-      userId,
-      id,
-    },
-  });
-  res.send({ drawingData });
-});
-
-// Update an existing drawing
-router.put("/:id", (req, res) => {
-  res.send({ msg: "drawings" });
-});
-
-// Delete a drawing
-router.delete("/:id", (req, res) => {
-  res.send({ msg: "drawings" });
-});
-
-// Share drawing
-router.post("/:id/share", (req, res) => {
-  res.send({ msg: "drawings" });
-});
 export default router;

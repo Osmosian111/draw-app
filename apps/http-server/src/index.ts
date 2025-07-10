@@ -9,7 +9,7 @@ import { JWT_SECRET } from "@repo/common/config";
 import { CreateUserSchema, LoginUserSchema } from "@repo/common/types";
 import prisma from "@repo/db/prisma";
 
-import drawings from "./router/drawings";
+import drawings from "./drawings";
 import auth from "./middleware";
 
 const app = express();
