@@ -1,6 +1,8 @@
-import { UpdateDrawingSchema } from "@repo/common/types";
+import { ShareSchema, UpdateDrawingSchema } from "@repo/common/types";
 import prisma from "@repo/db/prisma";
+
 import { Router } from "express";
+import { nanoid } from "nanoid";
 
 const router = Router();
 
@@ -42,7 +44,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete a drawing
-router.delete("/:id",async (req, res) => {
+router.delete("/:id", async (req, res) => {
   const userId = req.body.userId;
   const id = req.params.id;
 
@@ -57,8 +59,38 @@ router.delete("/:id",async (req, res) => {
 });
 
 // Share drawing
-router.patch("/:id/share", (req, res) => {
+router.patch("/:id/share", async (req, res) => {
+  const userId = req.body.userId;
+  const id = req.params.id;
+  const parsedData = ShareSchema.safeParse(req.body);
+  if (!parsedData.success) {
+    res.json({
+      msg: "Wrong inputs",
+    });
+    return;
+  }
+
+  if (parsedData.data.action === "create") {
+    const shareId = nanoid(16);
+
+    await prisma.sharedDrawing.create({
+      data: {
+        drawingId: id,
+        shareId,
+      },
+    });
+  }
+
+  if (parsedData.data.action === "delete") {
+    await prisma.sharedDrawing.delete({
+      where: {
+        drawingId: id,
+        shareId: parsedData.data.shareId,
+      },
+    });
+  }
+
   res.send({ msg: "drawings" });
 });
 
-export default router
+export default router;
